@@ -1,0 +1,50 @@
+# Python dependencies for the MSc thesis:
+# "Explainable Machine Learning Framework for Building-Level Cooling Demand
+#  Projection under Climate Change Scenarios: The Case of Milan"
+#
+# Author: Nima Mohammadi
+# Institution: Politecnico di Torino
+# Python version: 3.10 or higher (developed on 3.11)
+#
+# Install all dependencies with:
+#     pip install -r requirements.txt
+
+# Core scientific computing
+numpy>=1.24
+pandas>=2.0
+scipy>=1.11
+
+# Machine learning
+scikit-learn>=1.3
+xgboost>=2.0
+lightgbm>=4.0
+catboost>=1.2
+torch>=2.0
+
+# Explainable AI
+shap>=0.44
+lime>=0.2.0.1
+
+# Geospatial data handling
+geopandas>=0.14
+rasterio>=1.3
+shapely>=2.0
+pyproj>=3.6
+
+# Climate data handling
+xarray>=2023.10
+netCDF4>=1.6
+
+# Sensitivity analysis
+SALib>=1.4
+
+# Visualisation
+matplotlib>=3.7
+seaborn>=0.13
+
+# Jupyter notebook support
+jupyter>=1.0
+ipykernel>=6.25
+
+# Document generation (used for thesis Word output)
+python-docx>=1.0
