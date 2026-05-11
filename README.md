@@ -14,13 +14,13 @@
 
 ## Overview
 
-This repository contains all Python code developed for the MSc thesis listed above. The thesis builds a two-stage explainable machine-learning pipeline that:
+This repository contains the Python code developed for the MSc thesis listed above. The thesis builds a two-stage explainable machine-learning pipeline that:
 
-1. **Phase 1 — Cooling Presence Classification.** Predicts whether each residential building in Milan has an active summer cooling system, using a stacking ensemble of four classifiers (Logistic Regression, Random Forest, XGBoost, LightGBM) trained on 19,063 Energy Performance Certificate (EPC) records merged with cadastral geometry and ERA5-Land climate reanalysis data.
+1. **Phase 1 — Cooling Presence Classification.** Predicts whether each residential building in Milan has an active summer cooling system. Four classifier classes are evaluated (Logistic Regression, Random Forest, XGBoost, Multilayer Perceptron) on 19,063 buildings labelled through Energy Performance Certificates (EPCs). **Tuned XGBoost is selected as the final Phase 1 model** on the basis of held-out and spatial cross-validation performance, and applied city-wide to the 53,041-building cadastral stock.
 
-2. **Phase 2 — Cooling Intensity Regression.** Predicts a per-building climate-normalised cooling-intensity coefficient (β) using a four-learner stacking ensemble (XGBoost, LightGBM, CatBoost, MLP). The coefficient is then forward-propagated through a 12-model CMIP6 climate ensemble to produce city-wide residential cooling demand projections for Milan under SSP2-4.5 and SSP5-8.5 through 2100.
+2. **Phase 2 — Cooling Intensity Regression.** Predicts a per-building climate-normalised cooling-intensity coefficient (β) using a four-learner stacking ensemble (XGBoost, LightGBM, CatBoost, MLP). The coefficient is then forward-propagated through a 12-model NEX-GDDP-CMIP6 climate ensemble to produce city-wide residential cooling demand projections for Milan under SSP2-4.5 and SSP5-8.5 through 2100.
 
-Both stages include a full explainability audit using SHAP (SHapley Additive exPlanations) and LIME (Local Interpretable Model-agnostic Explanations). Uncertainty in the projections is decomposed using the Sobol-Saltelli variance-decomposition method. Results are aggregated to 88 NIL-scale spatial clusters for municipal planning use, and a decision-support demonstration is provided following ISO 31000:2018 and ISO 50001:2018 process standards.
+Both phases include a full explainability audit using SHAP (SHapley Additive exPlanations) and LIME (Local Interpretable Model-agnostic Explanations). Uncertainty in the projections is decomposed using the Sobol-Saltelli variance-decomposition method. Results are aggregated to 88 NIL-scale spatial clusters for municipal planning use, and a decision-support demonstration is provided following ISO 31000:2018 and ISO 50001:2018 process standards.
 
 ---
 
@@ -28,14 +28,14 @@ Both stages include a full explainability audit using SHAP (SHapley Additive exP
 
 | Result | Value |
 |---|---|
-| Phase 1 held-out ROC-AUC | 0.972 |
+| Phase 1 held-out ROC-AUC (tuned XGBoost) | 0.972 |
 | Phase 1 spatial cross-validation gap | 0.003 ROC-AUC points |
 | Phase 2 held-out R² (log1p-β scale) | 0.689 [95% CI: 0.644, 0.731] |
 | City-wide cooling demand, ERA5 baseline | 38.6 GWh yr⁻¹ |
 | City-wide cooling demand, SSP5-8.5 / 2080–2100 (V1) | 139.5 GWh yr⁻¹ [93.0, 180.9] |
 | Percentage increase, SSP5-8.5 / 2080–2100 | +261.8% |
 | Dominant uncertainty source (Sobol S_T, V1) | Climate-model identity: 94.3% |
-| Buildings in top-15 high-demand clusters | 29.2% of cooled stock, 35.2% of projected demand |
+| Buildings in top-15 high-demand NIL-scale clusters | 29.2% of cooled stock, 35.2% of projected demand |
 
 ---
 
@@ -44,73 +44,53 @@ Both stages include a full explainability audit using SHAP (SHapley Additive exP
 ```
 ml-cooling-demand-milan/
 │
-├── README.md                        ← This file
-├── requirements.txt                 ← Python dependencies
-├── LICENSE                          ← MIT Licence
+├── README.md                          ← This file
+├── RUN_ORDER.md                       ← Recommended script execution order
+├── requirements.txt                   ← Python dependencies
+├── LICENSE                            ← MIT Licence
 │
-├── 01_data_preprocessing/
-│   ├── 01a_epc_cleaning.py          ← CENED+2 EPC data cleaning and field selection
-│   ├── 01b_cadastre_matching.py     ← EDIFC_ID-based EPC-to-cadastre matching
-│   ├── 01c_era5_extraction.py       ← ERA5-Land CDD22 computation (1990–2024)
-│   └── 01d_feature_engineering.py  ← Interaction terms, heating_fraction proxy, log transforms
+├── 01_data_preprocessing/             EPC cleaning, cadastral matching, EPC-to-building
+│                                      merging, dataset audit and representativeness checks.
 │
-├── 02_phase1_classification/
-│   ├── 02a_baseline_classifiers.py  ← Logistic Regression and Random Forest training
-│   ├── 02b_xgboost_lgbm.py          ← XGBoost and LightGBM training
-│   ├── 02c_stacking_ensemble.py     ← Phase 1 stacking ensemble and evaluation
-│   ├── 02d_spatial_cv.py            ← Geographic cluster cross-validation diagnostic
-│   └── 02e_explainability.py        ← SHAP and LIME audit for Phase 1
+├── 02_phase1_classification/          Stage 1 cooling-presence classifier training
+│                                      (LR, RF, XGBoost, MLP), final XGBoost evaluation.
 │
-├── 03_phase2_regression/
-│   ├── 03a_beta_construction.py     ← Per-building β coefficient construction (Eq. 3.4)
-│   ├── 03b_regression_models.py     ← XGBoost, LightGBM, CatBoost, MLP training
-│   ├── 03c_stacking_ensemble.py     ← Phase 2 stacking ensemble and evaluation
-│   ├── 03d_functional_form.py       ← Linear vs log vs polynomial CDD robustness check
-│   └── 03e_explainability.py        ← SHAP and LIME audit for Phase 2
+├── 03_phase2_regression/              Stage 2 cooling-intensity (β coefficient) stacking
+│                                      ensemble training and Phase 1/Phase 2 dataset preparation.
+│                                      Note: this folder also contains the embedded ISO 31000 /
+│                                      MCDA decision-support analysis used in §4.9 of the thesis.
 │
-├── 04_climate_projection/
-│   ├── 04a_cmip6_download.py        ← CMIP6 ensemble retrieval (NEX-GDDP-CMIP6)
-│   ├── 04b_cdd_computation.py       ← CDD22 computation for all 12 models × 5 scenarios
-│   ├── 04c_demand_propagation.py    ← V1, V2, V3 demand variant computation
-│   └── 04d_bootstrap_intervals.py   ← Bootstrap 95% CI for projected demand
+├── 04_climate_projection/             CMIP6 (NEX-GDDP) extraction, ERA5-Land processing,
+│                                      CDD22 computation, demand-projection propagation,
+│                                      Google Earth Engine setup.
 │
-├── 05_uncertainty_sobol/
-│   ├── 05a_sobol_decomposition.py   ← Sobol-Saltelli total-order indices (V1 and V3)
-│   └── 05b_sensitivity_analysis.py  ← Sensitivity to functional form and adoption rate
+├── 05_uncertainty_sobol/              Sobol-Saltelli total-order sensitivity decomposition
+│                                      across V1 and V3 demand-variant configurations.
 │
-├── 06_spatial_analysis/
-│   ├── 06a_nil_aggregation.py       ← K-means clustering to 88 NIL-scale spatial clusters
-│   ├── 06b_vulnerability_maps.py    ← Per-building and district-level vulnerability maps
-│   └── 06c_cohort_decomposition.py  ← Demand decomposition by construction era and energy class
+├── 06_spatial_analysis/               NIL-cluster aggregation, vulnerability maps,
+│                                      district-level cohort decomposition.
 │
-├── 07_decision_support/
-│   ├── 07a_risk_register.py         ← ISO 31000 district-level risk register construction
-│   └── 07b_mcda_evaluation.py       ← Multi-criteria treatment evaluation and ranking
-│
-├── 08_visualisation/
-│   └── figures.py                   ← All figures appearing in the thesis (Figures 3.1–5.2)
+├── 08_visualisation/                  Visualisation scripts for thesis figures.
 │
 └── data/
-    └── DATA_ACCESS.md               ← How to obtain the datasets used in this thesis
+    └── DATA_ACCESS.md                 ← How to obtain the datasets used in this thesis
 ```
+
+Note: Phase 1 evaluates four classifier classes (LR, RF, XGBoost, MLP); tuned XGBoost is the selected final model. Phase 2 is a four-learner stacking ensemble (XGBoost + LightGBM + CatBoost + MLP). The decision-support workflow (ISO 31000, MCDA, PDCA) is presented in §4.9 of the thesis; its supporting code is embedded inside the Phase 2 cooling-intensity notebook rather than as a separate module.
 
 ---
 
 ## Data Availability
 
-The raw datasets used in this thesis cannot be redistributed in this repository. Access instructions for each source are as follows.
+The raw datasets used in this thesis cannot be redistributed in this repository. Access instructions are provided in `data/DATA_ACCESS.md` and summarised below.
 
-**CENED+2 — Lombardy Regional EPC Database**
-The CENED+2 database is maintained by Regione Lombardia. Research access can be requested through the regional energy agency (AREXPO / Struttura Certificazione Energetica). The thesis used a snapshot extracted in 2024 covering 19,063 residential buildings in the Municipality of Milan.
+**CENED+2 — Lombardy Regional EPC Database.** The CENED+2 database is maintained by Regione Lombardia. Research access can be requested through the regional energy agency (AREXPO / Struttura Certificazione Energetica). The thesis used a snapshot dated 28 November 2025 (file: `Database_CENED+2_-_Certificazione_ENergetica_degli_EDifici_20251128.csv`). After filtering to the Municipality of Milan, the working subset contained **342,684 EPC certificates**; after deduplication and matching to DBT2012 cadastral building polygons via the EDIFC_ID key, **19,063 buildings carried at least one valid EPC label** and were retained as the Phase 1 supervised training corpus.
 
-**DBT2012 — Milan Building Cadastre**
-The Database Topografico (DBT2012) building footprint layer is maintained by the Comune di Milano and is available through the Geoportale del Comune di Milano (geoportale.comune.milano.it). The EDIFC_ID field was used to match EPC records to cadastral polygons.
+**DBT2012 — Milan Building Cadastre.** The Database Topografico (DBT2012) building footprint layer is maintained by the Comune di Milano and is available through the Geoportale del Comune di Milano (geoportale.comune.milano.it). The cadastral inventory comprises 53,041 residential building polygons.
 
-**ERA5-Land — Climate Reanalysis**
-ERA5-Land hourly 2-metre air temperature data (0.1° resolution, 1990–2024) is publicly available through the Copernicus Climate Change Service (C3S) Climate Data Store at cds.climate.copernicus.eu. No access restrictions apply.
+**ERA5-Land — Climate Reanalysis.** ERA5-Land hourly 2-metre air temperature data (0.1° resolution, 1990–2024) is publicly available through the Copernicus Climate Change Service (C3S) Climate Data Store at cds.climate.copernicus.eu. No access restrictions apply.
 
-**NEX-GDDP-CMIP6 — CMIP6 Downscaled Climate Projections**
-The NASA Earth Exchange Global Daily Downscaled Projections (NEX-GDDP-CMIP6) dataset is publicly available through NASA at www.nasa.gov/nex. The 12 GCMs used in this thesis are listed in Table 3.6 of the thesis document.
+**NEX-GDDP-CMIP6 — CMIP6 Downscaled Climate Projections.** The NASA Earth Exchange Global Daily Downscaled Projections (NEX-GDDP-CMIP6) dataset is publicly available through NASA at www.nasa.gov/nex and via Google Earth Engine. The 12 GCMs used in this thesis are listed in Table 3.6 of the thesis document.
 
 ---
 
@@ -119,12 +99,18 @@ The NASA Earth Exchange Global Daily Downscaled Projections (NEX-GDDP-CMIP6) dat
 Clone the repository and install the required packages:
 
 ```bash
-git clone https://github.com/YourUsername/ml-cooling-demand-milan.git
+git clone https://github.com/nimamhmd/ml-cooling-demand-milan.git
 cd ml-cooling-demand-milan
 pip install -r requirements.txt
 ```
 
 Python 3.10 or higher is recommended. All scripts were developed and tested on Python 3.11.
+
+---
+
+## Execution Order
+
+The recommended order in which to run the scripts is documented in `RUN_ORDER.md`. In brief, the pipeline runs from EPC data ingestion (folder 01), through Phase 1 classifier training (folder 02), Phase 2 regression and decision-support work (folder 03), climate projection (folder 04), uncertainty decomposition (folder 05), spatial vulnerability mapping (folder 06), and finally figure generation (folder 08).
 
 ---
 
@@ -135,6 +121,7 @@ The full list of dependencies is in `requirements.txt`. Key packages:
 ```
 numpy
 pandas
+scipy
 scikit-learn
 xgboost
 lightgbm
@@ -142,11 +129,16 @@ catboost
 torch
 shap
 lime
-scipy
-matplotlib
-seaborn
+SALib
 geopandas
 rasterio
+xarray
+netCDF4
+earthengine-api
+matplotlib
+seaborn
+joblib
+tqdm
 ```
 
 ---

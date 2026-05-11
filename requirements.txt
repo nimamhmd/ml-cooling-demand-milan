@@ -25,6 +25,9 @@ torch>=2.0
 shap>=0.44
 lime>=0.2.0.1
 
+# Sensitivity analysis (Sobol-Saltelli decomposition)
+SALib>=1.4
+
 # Geospatial data handling
 geopandas>=0.14
 rasterio>=1.3
@@ -34,13 +37,15 @@ pyproj>=3.6
 # Climate data handling
 xarray>=2023.10
 netCDF4>=1.6
-
-# Sensitivity analysis
-SALib>=1.4
+earthengine-api>=0.1.380
 
 # Visualisation
 matplotlib>=3.7
 seaborn>=0.13
+
+# Utilities
+joblib>=1.3
+tqdm>=4.66
 
 # Jupyter notebook support
 jupyter>=1.0
