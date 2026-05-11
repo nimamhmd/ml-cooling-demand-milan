@@ -37,7 +37,7 @@ https://geoportale.comune.milano.it/
 The relevant layer is `EDIFC_DBT2012` (or its current equivalent). Each polygon carries the `EDIFC_ID` field used in this thesis as the matching key against the CENED+2 EPC database.
 
 **Licence:**
-The DBT2012 layer is distributed under the Creative Commons Attribution licence (CC BY 4.0) by the Comune di Milano.
+The DBT2012 layer is distributed under the Italian *Licenza Italiana di Riuso* (IODL 2.0) by the Comune di Milano.
 
 ---
 
@@ -72,7 +72,7 @@ NEX-GDDP-CMIP6 is freely available through several mirrors:
 
 This thesis used the Google Earth Engine interface for extraction. Authentication setup is documented in `04_climate_projection/00_setup_gee_authentication.py`.
 
-**The 12 GCMs used in this thesis are listed in Table 3.6 of the thesis document.**
+**The 12 GCMs used in this thesis are enumerated in the climate-projection methodology section of the thesis (Chapter 3).**
 
 **Licence:**
 NEX-GDDP-CMIP6 is publicly available with no access restrictions. Acknowledgement of NASA NEX and the participating modelling centres in any publication is required.
